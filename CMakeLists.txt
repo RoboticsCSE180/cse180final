@@ -4,7 +4,7 @@ project(cse180final)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -101,6 +101,7 @@ catkin_package(
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 ###########
 ## Build ##
@@ -131,6 +132,9 @@ catkin_package(
 # target_link_libraries(cse180final_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(hello hello.cpp)
+target_link_libraries(hello ${catkin_LIBRARIES})
 
 #############
 ## Install ##
