@@ -38,9 +38,9 @@ int main(int argc,char **argv) {
     goal.target_pose.header.frame_id = "map";
     goal.target_pose.header.stamp = ros::Time::now();
     
-    goal.target_pose.pose.position.x = 1;
-    goal.target_pose.pose.position.y = 1;
-    goal.target_pose.pose.orientation.w = 1.0;
+    goal.target_pose.pose.position.x = -1.5;
+    goal.target_pose.pose.position.y = 0.1;
+    goal.target_pose.pose.orientation.w = 0.1;
 
     ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback);
     
