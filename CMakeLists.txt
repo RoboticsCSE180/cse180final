@@ -4,7 +4,7 @@ project(cse180final)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp actionlib move_base_msgs actionlib_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp actionlib move_base_msgs actionlib_msgs geometry_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -135,9 +135,11 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(hello hello.cpp)
 add_executable(movearoundwithfeedback movearoundwithfeedback.cpp)
+add_executable(testcostmap testcostmap.cpp)
 
 target_link_libraries(hello ${catkin_LIBRARIES})
 target_link_libraries(movearoundwithfeedback ${catkin_LIBRARIES})
+target_link_libraries(testcostmap ${catkin_LIBRARIES})
 
 #############
 ## Install ##
