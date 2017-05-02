@@ -1,6 +1,53 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <vector>
+#include <queue> 
+
+using namespace std; 
+
+class GridCells{
+public: 
+	double width; 
+	double height; 
+	double x; 
+	double y; 
+	bool visited; 
+
+	GridCells(){
+		width = 0.0; 
+		height = 0.0; 
+		x = 0.0; 
+		y = 0.0; 
+		visited = false; 
+	}
+
+	GridCells(int size){
+		width = 100.0 / (double)(size); 
+		height = 100.0 / (double)(size); 
+		x = 0.0; 
+		y = 0.0; 
+		visited = false; 
+	}
+
+	
+}; 
+
+void setupGrid(vector < vector<GridCells> > & G, int grids){
+
+
+
+	for(int i = 0; i < grids; ++i){
+		for(int j = 0; j < grids; ++j){
+			G.at(i).at(j).width = 100.0 / (double)(grids); 
+			G.at(i).at(j).height = 100.0 / (double)(grids); 
+			G.at(i).at(j).x = (-50 + (G.at(i).at(j).width * j)) + (100.0/(grids * 2.0)); 
+			G.at(i).at(j).y = (50 - (i * G.at(i).at(j).height)) - (100.0 / (2.0 * grids));
+		}
+	}
+
+	return; 
+}
 
 
 void serviceActivated() {
@@ -23,28 +70,33 @@ void serviceFeedback(const move_base_msgs::MoveBaseFeedbackConstPtr& fb) {
 
 int main(int argc,char **argv) {
 
-    ros::init(argc,argv,"movearoundwithfeedback");
-    ros::NodeHandle nh;
+	ros::init(argc,argv,"movearoundwithfeedback");
+	ros::NodeHandle nh;
+	int matrixSize = 8; 
+    
+	vector< vector<GridCells > > Grids(matrixSize, vector<GridCells>(matrixSize)); 
 
-    actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>
+	setupGrid(Grids, matrixSize); 
+	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>
 	ac("move_base",true);
-    ROS_INFO_STREAM("Waiting for server to be available...");
-    while (!ac.waitForServer()) {
-    }
-    ROS_INFO_STREAM("done!");
+	ROS_INFO_STREAM("Waiting for server to be available...");
+	while (!ac.waitForServer()) {
+	}
+	ROS_INFO_STREAM("done!");
 
-    move_base_msgs::MoveBaseGoal goal;
+	move_base_msgs::MoveBaseGoal goal;
 
-    goal.target_pose.header.frame_id = "map";
-    goal.target_pose.header.stamp = ros::Time::now();
+	goal.target_pose.header.frame_id = "map";
+	goal.target_pose.header.stamp = ros::Time::now();
 	
    
-    goal.target_pose.pose.position.x = -1.5;
-    goal.target_pose.pose.position.y = 0.1;
-    goal.target_pose.pose.orientation.w = 0.1;
+	goal.target_pose.pose.position.x = -1.5;
+	goal.target_pose.pose.position.y = 0.1;
+	goal.target_pose.pose.orientation.w = 0.1;
 
-    ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback);
+	ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback);
     
-    ros::spin();
-    return 0;    
+	ros::spin();
+	
+	return 0;    
 }
