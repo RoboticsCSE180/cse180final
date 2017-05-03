@@ -84,19 +84,32 @@ int main(int argc,char **argv) {
 	}
 	ROS_INFO_STREAM("done!");
 
+	queue<GridCells> queueOfGridCells; 
+
+	for(int i = 0; i < matrixSize; ++i){
+		for(int j = 0; j < matrixSize; ++j){
+			queueOfGridCells.push(Grids.at(i).at(j)); 
+		}
+	}
+
 	move_base_msgs::MoveBaseGoal goal;
 
 	goal.target_pose.header.frame_id = "map";
 	goal.target_pose.header.stamp = ros::Time::now();
-	
-   
-	goal.target_pose.pose.position.x = -1.5;
-	goal.target_pose.pose.position.y = 0.1;
-	goal.target_pose.pose.orientation.w = 0.1;
+	ros::Rate rate(2); 
+   	while(!queueOfGridCells.empty()){
 
-	ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback);
-    
-	ros::spin();
+		GridCells g = queueOfGridCells.front(); 
+		queueOfGridCells.pop();
+		
+		goal.target_pose.pose.position.x = g.x;
+		goal.target_pose.pose.position.y = g.y;
+		goal.target_pose.pose.orientation.w = 0.1;
+		ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback);
+		ros::spinOnce(); 
+		rate.sleep(); 
+	}
+	
 	
 	return 0;    
 }
