@@ -55,12 +55,12 @@ double yGoal = 0.0;
 
 
 
-void goalMessageReceived(const geometry_msgs::Pose &p){
+/*void goalMessageReceived(const geometry_msgs::Pose &p){
 	xGoal = p.position.x; 
 	yGoal = p.position.y; 
 
 	return; 
-}
+}*/
 int main(int argc,char **argv) {
 
 	ros::init(argc,argv,"movearoundwithfeedback");
@@ -68,15 +68,28 @@ int main(int argc,char **argv) {
 	 
 	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>ac("move_base",true);
 
-	ros::Subscriber sub = nh.subscribe("/newgoal", 1000, &goalMessageReceived);
+	//ros::Subscriber sub = nh.subscribe("/newgoal", 1000, &goalMessageReceived);
 	ROS_INFO_STREAM("Waiting for server to be available...");
 	while (!ac.waitForServer()) {
 	}
 	ROS_INFO_STREAM("done!");
-
 	
+	int matrixSize = 8; 
+	vector< vector<GridCells > > Grids(matrixSize, vector<GridCells>(matrixSize)); 
+
+	setupGrid(Grids, matrixSize);
+
+	queue<GridCells> queueOfGridCells; 
+
+	for(int i = 0; i < matrixSize; ++i){
+		for(int j = 0; j < matrixSize; ++j){
+			queueOfGridCells.push(Grids.at(i).at(j)); 
+		}
+	}
 
 	move_base_msgs::MoveBaseGoal goal;
+	GridCells g = queueOfGridCells.front(); 
+	queueOfGridCells.pop(); 
 
 		// not running through this iteratively, keeps reupdating goal when it should send it to the goal and wait!!! then send it to the next goal. 
 	
@@ -84,16 +97,16 @@ int main(int argc,char **argv) {
 	goal.target_pose.header.frame_id = "map";
 	goal.target_pose.header.stamp = ros::Time::now();
 
-	goal.target_pose.pose.position.x = xGoal;
-	goal.target_pose.pose.position.y = yGoal; 
+	goal.target_pose.pose.position.x = g.x;
+	goal.target_pose.pose.position.y = g.y; 
 	goal.target_pose.pose.orientation.w = 0.1;
 	
 	ac.sendGoal(goal); 
 
-	ac.waitForResult(ros::Duration(10.0)); 
+	ac.waitForResult(ros::Duration(30.0)); 
 	
 
-	while(ros::ok()){
+	while(ros::ok() && !queueOfGridCells.empty()){
 		if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
 			ROS_INFO_STREAM("Current State: " << ac.getState().toString().c_str()); 
 			ROS_INFO_STREAM("Goal reached"); 
@@ -102,10 +115,17 @@ int main(int argc,char **argv) {
 			while (!ac.waitForServer()) {
 			}
 			ROS_INFO_STREAM("done!");
-			goal.target_pose.pose.position.x = xGoal; 
-			goal.target_pose.pose.position.y = yGoal; 
+	
+			g = queueOfGridCells.front(); 
+			queueOfGridCells.pop(); 
+	
+			goal.target_pose.pose.position.x = g.x; 
+			goal.target_pose.pose.position.y = g.y; 
+			goal.target_pose.pose.orientation.w = 0.1; 
+			
 			ac.sendGoal(goal); 
-			ac.waitForResult(ros::Duration(10.0)); 
+	
+			ac.waitForResult(ros::Duration(30.0)); 
 		}
 		else if(ac.getState() == actionlib::SimpleClientGoalState::ABORTED){
 			ROS_INFO_STREAM("Current State: " << ac.getState().toString().c_str()); 
@@ -116,6 +136,7 @@ int main(int argc,char **argv) {
 		ros::spinOnce(); 
 	}
 	
+	ros::shutdown(); 
 
 	
 	return 0;    
