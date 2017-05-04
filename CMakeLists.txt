@@ -137,11 +137,13 @@ add_executable(hello hello.cpp)
 add_executable(movearoundwithfeedback movearoundwithfeedback.cpp)
 add_executable(testcostmap testcostmap.cpp)
 add_executable(laser laser.cpp)
+add_executable(sendGoal sendGoal.cpp)
 
 target_link_libraries(hello ${catkin_LIBRARIES})
 target_link_libraries(movearoundwithfeedback ${catkin_LIBRARIES})
 target_link_libraries(testcostmap ${catkin_LIBRARIES})
 target_link_libraries(laser ${catkin_LIBRARIES})
+target_link_libraries(sendGoal ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############

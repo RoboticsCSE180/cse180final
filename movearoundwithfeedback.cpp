@@ -41,13 +41,17 @@ void setupGrid(vector < vector<GridCells> > & G, int grids){
 		for(int j = 0; j < grids; ++j){
 			G.at(i).at(j).width = 100.0 / (double)(grids); 
 			G.at(i).at(j).height = 100.0 / (double)(grids); 
-			G.at(i).at(j).x = (-50 + (G.at(i).at(j).width * j)) + (100.0/(grids * 2.0)); 
-			G.at(i).at(j).y = (50 - (i * G.at(i).at(j).height)) - (100.0 / (2.0 * grids));
+			G.at(i).at(j).x = ((-50 + (G.at(i).at(j).width * j)) + (100.0/(grids * 2.0))) * 0.1; 
+			G.at(i).at(j).y = ((50 - (i * G.at(i).at(j).height)) - (100.0 / (2.0 * grids))) * 0.1;
 		}
 	}
 
 	return; 
 }
+
+double xGoal = 0.0; 
+
+double yGoal = 0.0; 
 
 
 void serviceActivated() {
@@ -67,49 +71,43 @@ void serviceFeedback(const move_base_msgs::MoveBaseFeedbackConstPtr& fb) {
 		    fb->base_position.pose.position.x << "," <<
 		    fb->base_position.pose.position.y);
 }
+void goalMessageReceived(const geometry_msgs::Pose &p){
+	xGoal = p.position.x; 
+	yGoal = p.position.y; 
 
+	return; 
+}
 int main(int argc,char **argv) {
 
 	ros::init(argc,argv,"movearoundwithfeedback");
 	ros::NodeHandle nh;
-	int matrixSize = 8; 
-    
-	vector< vector<GridCells > > Grids(matrixSize, vector<GridCells>(matrixSize)); 
+	 
+	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>ac("move_base",true);
 
-	setupGrid(Grids, matrixSize); 
-	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>
-	ac("move_base",true);
+	ros::Subscriber sub = nh.subscribe("/newgoal", 1000, &goalMessageReceived);
 	ROS_INFO_STREAM("Waiting for server to be available...");
 	while (!ac.waitForServer()) {
 	}
 	ROS_INFO_STREAM("done!");
 
-	queue<GridCells> queueOfGridCells; 
-
-	for(int i = 0; i < matrixSize; ++i){
-		for(int j = 0; j < matrixSize; ++j){
-			queueOfGridCells.push(Grids.at(i).at(j)); 
-		}
-	}
+	
 
 	move_base_msgs::MoveBaseGoal goal;
 
+		// not running through this iteratively, keeps reupdating goal when it should send it to the goal and wait!!! then send it to the next goal. 
+	
+
 	goal.target_pose.header.frame_id = "map";
 	goal.target_pose.header.stamp = ros::Time::now();
-	ros::Rate rate(2); 
-   	while(!queueOfGridCells.empty()){
 
-		GridCells g = queueOfGridCells.front(); 
-		queueOfGridCells.pop();
-		
-		goal.target_pose.pose.position.x = g.x;
-		goal.target_pose.pose.position.y = g.y;
-		goal.target_pose.pose.orientation.w = 0.1;
-		ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback);
-		ros::spinOnce(); 
-		rate.sleep(); 
-	}
+	goal.target_pose.pose.position.x = xGoal;
+	goal.target_pose.pose.position.y = yGoal; 
+	goal.target_pose.pose.orientation.w = 0.1;
 	
+	ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback); 
+
+	ros::spin(); 
+
 	
 	return 0;    
 }
