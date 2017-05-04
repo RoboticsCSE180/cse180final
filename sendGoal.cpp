@@ -38,8 +38,8 @@ void setupGrid(vector < vector<GridCells> > & G, int grids){
 		for(int j = 0; j < grids; ++j){
 			G.at(i).at(j).width = 100.0 / (double)(grids); 
 			G.at(i).at(j).height = 100.0 / (double)(grids); 
-			G.at(i).at(j).x = ((-50 + (G.at(i).at(j).width * j)) + (100.0/(grids * 2.0))) * 0.1; 
-			G.at(i).at(j).y = ((50 - (i * G.at(i).at(j).height)) - (100.0 / (2.0 * grids))) * 0.1;
+			G.at(i).at(j).x = ((-50 + (G.at(i).at(j).width * j)) + (100.0/(grids * 2.0))) * 0.05; 
+			G.at(i).at(j).y = ((50 - (i * G.at(i).at(j).height)) - (100.0 / (2.0 * grids))) * 0.05;
 		}
 	}
 

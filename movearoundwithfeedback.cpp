@@ -54,23 +54,7 @@ double xGoal = 0.0;
 double yGoal = 0.0; 
 
 
-void serviceActivated() {
-    ROS_INFO_STREAM("Service received goal");
-}
 
-void serviceDone(const actionlib::SimpleClientGoalState& state,
-		 const move_base_msgs::MoveBaseResultConstPtr& result) {
-    ROS_INFO_STREAM("Service completed");
-    ROS_INFO_STREAM("Final state " << state.toString().c_str());
-    ros::shutdown();
-}
-
-void serviceFeedback(const move_base_msgs::MoveBaseFeedbackConstPtr& fb) {
-    ROS_INFO_STREAM("Service still running");
-    ROS_INFO_STREAM("Current pose (x,y) " <<
-		    fb->base_position.pose.position.x << "," <<
-		    fb->base_position.pose.position.y);
-}
 void goalMessageReceived(const geometry_msgs::Pose &p){
 	xGoal = p.position.x; 
 	yGoal = p.position.y; 
@@ -104,9 +88,34 @@ int main(int argc,char **argv) {
 	goal.target_pose.pose.position.y = yGoal; 
 	goal.target_pose.pose.orientation.w = 0.1;
 	
-	ac.sendGoal(goal,&serviceDone,&serviceActivated,&serviceFeedback); 
+	ac.sendGoal(goal); 
 
-	ros::spin(); 
+	ac.waitForResult(ros::Duration(10.0)); 
+	
+
+	while(ros::ok()){
+		if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
+			ROS_INFO_STREAM("Current State: " << ac.getState().toString().c_str()); 
+			ROS_INFO_STREAM("Goal reached"); 
+
+				ROS_INFO_STREAM("Waiting for server to be available...");
+			while (!ac.waitForServer()) {
+			}
+			ROS_INFO_STREAM("done!");
+			goal.target_pose.pose.position.x = xGoal; 
+			goal.target_pose.pose.position.y = yGoal; 
+			ac.sendGoal(goal); 
+			ac.waitForResult(ros::Duration(10.0)); 
+		}
+		else if(ac.getState() == actionlib::SimpleClientGoalState::ABORTED){
+			ROS_INFO_STREAM("Current State: " << ac.getState().toString().c_str()); 
+			break; 
+		}
+		
+
+		ros::spinOnce(); 
+	}
+	
 
 	
 	return 0;    
