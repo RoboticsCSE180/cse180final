@@ -1,10 +1,18 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <sensor_msgs/LaserScan.h> 
+#include <geometry_msgs/Twist.h>
+
 #include <vector>
 #include <queue> 
 
 using namespace std; 
+
+
+float angle=0.0;
+float closest=0.0;
+int closestIndex=0;
 
 class GridCells{
 public: 
@@ -48,7 +56,29 @@ void setupGrid(vector < vector<GridCells> > & G, int grids){
 
 	return; 
 }
+void scanMessageReceived (const sensor_msgs::LaserScan&msg) {
+ ROS_INFO_STREAM( "Received scan . Finding closest obstacle" ) ; 
+ closest=msg.ranges[0];
 
+ closestIndex=0;
+ for(int i=1; i<msg.ranges.size();i++){
+    if(msg.ranges[i]<closest){
+        closest=msg.ranges[i];
+        closestIndex=i;
+        angle=msg.angle_min+(float)(i/720*270);
+    }
+ } 
+   ROS_INFO_STREAM( "Closest obstacle at distance (m) :" << closest ) ;
+    ROS_INFO_STREAM("Index: "<<closestIndex);
+    ROS_INFO_STREAM("Angle: "<<angle);
+ }
+ /*int main ( int argc , char ** argv ) {
+ ros::init( argc , argv , "scanreader") ; 
+  ros::NodeHandle nh; 
+   ros::Subscriber subScan = nh.subscribe ( "/scan" ,1000 , &scanMessageReceived ) ; 
+    ros::spin ();
+    }
+*/
 double xGoal = 0.0; 
 
 double yGoal = 0.0; 
@@ -65,7 +95,9 @@ int main(int argc,char **argv) {
 
 	ros::init(argc,argv,"movearoundwithfeedback");
 	ros::NodeHandle nh;
-	 
+	 ros::Subscriber subScan = nh.subscribe ( "/scan" ,1000 , &scanMessageReceived ) ; 
+     ros::Publisher pub=nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel",1000);
+     geometry_msgs::Twist mg;
 	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>ac("move_base",true);
 
 	//ros::Subscriber sub = nh.subscribe("/newgoal", 1000, &goalMessageReceived);
@@ -118,10 +150,12 @@ int main(int argc,char **argv) {
 	
 			g = queueOfGridCells.front(); 
 			queueOfGridCells.pop(); 
-	
+	           if(closest<0.5){
+
+               }
 			goal.target_pose.pose.position.x = g.x; 
 			goal.target_pose.pose.position.y = g.y; 
-			goal.target_pose.pose.orientation.w = 0.1; 
+			goal.target_pose.pose.orientation.w = 0.2; 
 			
 			ac.sendGoal(goal); 
 	
@@ -132,8 +166,8 @@ int main(int argc,char **argv) {
 			break; 
 		}
 		
-
-		ros::spinOnce(); 
+ros::spinOnce();
+		
 	}
 	
 	ros::shutdown(); 
